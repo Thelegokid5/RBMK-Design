@@ -1,6 +1,6 @@
 import type { ChannelType, SteamType } from "./types";
 
-export const CELL_SIZE = 32;
+export const CELL_SIZE = 25;
 export const SIM_TPS = 20;
 export const MELTDOWN_TEMP = 1500;
 export const DIRS = [

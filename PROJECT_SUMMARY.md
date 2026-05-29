@@ -26,6 +26,7 @@ Build an accurate Nuclear Tech Mod RBMK designer/simulator that can run offline 
 ## Implemented Features
 
 - Grid editor with selectable size from 5x5 to 25x25.
+- Pixel-art grid cells are currently set to 25x25 pixels.
 - Paint/erase tools.
 - Channel palette:
   - Fuel
