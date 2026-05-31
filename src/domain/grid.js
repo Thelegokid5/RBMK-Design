@@ -1,6 +1,4 @@
-import type { Cell, GridDesign } from "./types";
-
-export function createCell(): Cell {
+export function createCell() {
   return {
     type: "empty",
     fuelId: null,
@@ -11,11 +9,11 @@ export function createCell(): Cell {
   };
 }
 
-export function createGrid(size: number): Cell[][] {
+export function createGrid(size) {
   return Array.from({ length: size }, () => Array.from({ length: size }, createCell));
 }
 
-export function createDesign(size = 11): GridDesign {
+export function createDesign(size = 11) {
   return {
     version: 1,
     name: "Untitled RBMK",
@@ -24,14 +22,14 @@ export function createDesign(size = 11): GridDesign {
   };
 }
 
-export function cloneDesign(design: GridDesign): GridDesign {
+export function cloneDesign(design) {
   return {
     ...design,
     cells: design.cells.map((row) => row.map((cell) => ({ ...cell }))),
   };
 }
 
-export function resizeDesign(design: GridDesign, size: number): GridDesign {
+export function resizeDesign(design, size) {
   const next = createDesign(size);
   next.name = design.name;
   for (let r = 0; r < Math.min(size, design.size); r += 1) {

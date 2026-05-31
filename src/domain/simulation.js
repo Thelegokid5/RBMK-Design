@@ -1,8 +1,7 @@
-import { DIRS, MELTDOWN_TEMP, STEAM_TYPES } from "./channels";
-import { evaluateDecay, evaluateFlux, fuelById } from "./fuels";
-import type { Cell, GridDesign, NeutronSpeed, SimulationState, SimulationSummary, SteamType } from "./types";
+import { DIRS, MELTDOWN_TEMP, STEAM_TYPES } from "./channels.js";
+import { evaluateDecay, evaluateFlux, fuelById } from "./fuels.js";
 
-function makeFlat(size: number, fill = 0): Float32Array[] {
+function makeFlat(size, fill = 0) {
   return Array.from({ length: size }, () => {
     const row = new Float32Array(size);
     row.fill(fill);
@@ -10,11 +9,11 @@ function makeFlat(size: number, fill = 0): Float32Array[] {
   });
 }
 
-function copyFlat(source: Float32Array[]): Float32Array[] {
+function copyFlat(source) {
   return source.map((row) => new Float32Array(row));
 }
 
-export function createSimulationState(size: number): SimulationState {
+export function createSimulationState(size) {
   return {
     tick: 0,
     flux: makeFlat(size),
@@ -27,25 +26,25 @@ export function createSimulationState(size: number): SimulationState {
   };
 }
 
-function isFuel(cell: Cell): boolean {
+function isFuel(cell) {
   return (cell.type === "fuel" || cell.type === "moderated_fuel") && !!cell.fuelId;
 }
 
-function isModerator(cell: Cell): boolean {
+function isModerator(cell) {
   return cell.type === "graphite" || cell.type === "moderated_control" || cell.type === "moderated_fuel";
 }
 
-function splitEfficiency(inputSpeed: NeutronSpeed, targetSpeed: NeutronSpeed): number {
+function splitEfficiency(inputSpeed, targetSpeed) {
   if (inputSpeed === targetSpeed) return 1;
   return targetSpeed === "slow" ? 0.5 : 0.3;
 }
 
-function controlTransmission(cell: Cell): number {
+function controlTransmission(cell) {
   if (cell.type !== "control" && cell.type !== "moderated_control" && cell.type !== "auto_control") return 1;
   return Math.max(0, Math.min(1, 1 - cell.controlInsertion / 100));
 }
 
-function fuelOutput(cell: Cell, incomingFlux: number, xenon: number, depletion: number): number {
+function fuelOutput(cell, incomingFlux, xenon, depletion) {
   if (!cell.fuelId) return 0;
   const fuel = fuelById[cell.fuelId];
   if (!fuel) return 0;
@@ -53,7 +52,7 @@ function fuelOutput(cell: Cell, incomingFlux: number, xenon: number, depletion: 
   return evaluateFlux(fuel.fluxFunction, incomingFlux) * xenonFactor * evaluateDecay(fuel.decay, depletion);
 }
 
-export function stepSimulation(design: GridDesign, previous: SimulationState): SimulationState {
+export function stepSimulation(design, previous) {
   const size = design.size;
   const flux = makeFlat(size);
   const heat = copyFlat(previous.heat);
@@ -191,8 +190,8 @@ export function stepSimulation(design: GridDesign, previous: SimulationState): S
   };
 }
 
-export function summarizeSimulation(design: GridDesign, state: SimulationState): SimulationSummary {
-  const steamByType: Record<SteamType, number> = {
+export function summarizeSimulation(design, state) {
+  const steamByType = {
     steam: 0,
     dense_steam: 0,
     super_dense_steam: 0,
@@ -203,7 +202,7 @@ export function summarizeSimulation(design: GridDesign, state: SimulationState):
   let totalHeat = 0;
   let hasFuel = false;
   let hasIgniter = false;
-  const warnings: SimulationSummary["warnings"] = [];
+  const warnings = [];
 
   for (let r = 0; r < design.size; r += 1) {
     for (let c = 0; c < design.size; c += 1) {

@@ -1,29 +1,21 @@
-import { createDesign } from "./grid";
-import type { GridDesign } from "./types";
+import { createDesign } from "./grid.js";
 
 const STORAGE_KEY = "rbmk-design:saves";
 
-export interface SaveSlot {
-  id: string;
-  name: string;
-  updatedAt: string;
-  design: GridDesign;
-}
-
-export function loadSlots(): SaveSlot[] {
+export function loadSlots() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    const parsed = JSON.parse(raw) as SaveSlot[];
+    const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
 }
 
-export function saveSlot(design: GridDesign): SaveSlot[] {
+export function saveSlot(design) {
   const slots = loadSlots();
-  const slot: SaveSlot = {
+  const slot = {
     id: crypto.randomUUID(),
     name: design.name || "Untitled RBMK",
     updatedAt: new Date().toISOString(),
@@ -34,7 +26,7 @@ export function saveSlot(design: GridDesign): SaveSlot[] {
   return next;
 }
 
-export function exportDesign(design: GridDesign): void {
+export function exportDesign(design) {
   const blob = new Blob([JSON.stringify(design, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
@@ -44,9 +36,9 @@ export function exportDesign(design: GridDesign): void {
   URL.revokeObjectURL(url);
 }
 
-export async function importDesign(file: File): Promise<GridDesign> {
+export async function importDesign(file) {
   const raw = await file.text();
-  const parsed = JSON.parse(raw) as GridDesign;
+  const parsed = JSON.parse(raw);
   if (parsed.version !== 1 || !Array.isArray(parsed.cells)) return createDesign();
   return parsed;
 }

@@ -1,5 +1,3 @@
-import type { ChannelType, SteamType } from "./types";
-
 export const CELL_SIZE = 25;
 export const SIM_TPS = 20;
 export const MELTDOWN_TEMP = 1500;
@@ -8,9 +6,9 @@ export const DIRS = [
   [0, -1],
   [1, 0],
   [-1, 0],
-] as const;
+];
 
-export const CHANNELS: Array<{ id: ChannelType; label: string; color: string }> = [
+export const CHANNELS = [
   { id: "fuel", label: "Fuel Channel", color: "#d7c84a" },
   { id: "moderated_fuel", label: "Moderated Fuel", color: "#8acb5b" },
   { id: "control", label: "Control Rod", color: "#5170d8" },
@@ -26,11 +24,11 @@ export const CHANNELS: Array<{ id: ChannelType; label: string; color: string }> 
   { id: "structural", label: "Structural", color: "#5d6266" },
 ];
 
-export const STEAM_TYPES: Array<{ id: SteamType; label: string; minTemp: number; mbPerTick: number; color: string }> = [
+export const STEAM_TYPES = [
   { id: "steam", label: "Steam 100C", minTemp: 100, mbPerTick: 1000, color: "#32bad2" },
   { id: "dense_steam", label: "Dense 300C", minTemp: 300, mbPerTick: 800, color: "#1782c9" },
   { id: "super_dense_steam", label: "Super Dense 450C", minTemp: 450, mbPerTick: 600, color: "#4352d9" },
   { id: "ultra_dense_steam", label: "Ultra Dense 600C", minTemp: 600, mbPerTick: 400, color: "#713ed6" },
 ];
 
-export const CONTROL_GROUPS = ["Default", "Red", "Yellow", "Green", "Blue", "Purple"] as const;
+export const CONTROL_GROUPS = ["Default", "Red", "Yellow", "Green", "Blue", "Purple"];

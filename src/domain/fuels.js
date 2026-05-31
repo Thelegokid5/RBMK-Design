@@ -1,6 +1,4 @@
-import type { DecayFunctionKind, FluxFunctionKind, FuelRod } from "./types";
-
-export const FUEL_RODS: FuelRod[] = [
+export const FUEL_RODS = [
   { id: "nu", name: "NU", yield: 100_000_000, decay: "linear", splitsWith: "slow", splitsInto: "fast", fluxFunction: "euler", xenonGenMultiplier: 0.5, heatPerFlux: 1, diffusion: 0.02, meltingPoint: 2865, selfIgniting: false },
   { id: "leu", name: "LEU", yield: 100_000_000, decay: "linear", splitsWith: "slow", splitsInto: "fast", fluxFunction: "euler", xenonGenMultiplier: 0.5, heatPerFlux: 1, diffusion: 0.02, meltingPoint: 2865, selfIgniting: false },
   { id: "heu", name: "HEU", yield: 100_000_000, decay: "gentle_slope", splitsWith: "slow", splitsInto: "fast", fluxFunction: "square_root", xenonGenMultiplier: 0.5, heatPerFlux: 1, diffusion: 0.02, meltingPoint: 2865, selfIgniting: false },
@@ -22,9 +20,9 @@ export const FUEL_RODS: FuelRod[] = [
   { id: "digamma", name: "Digamma", yield: 1_000_000, decay: "gentle_slope", splitsWith: "slow", splitsInto: "fast", fluxFunction: "quadratic", xenonGenMultiplier: 0.5, heatPerFlux: 0.1, diffusion: 0.02, meltingPoint: 100_000, selfIgniting: true },
 ];
 
-export const fuelById = Object.fromEntries(FUEL_RODS.map((fuel) => [fuel.id, fuel])) as Record<string, FuelRod>;
+export const fuelById = Object.fromEntries(FUEL_RODS.map((fuel) => [fuel.id, fuel]));
 
-export function evaluateFlux(kind: FluxFunctionKind, input: number): number {
+export function evaluateFlux(kind, input) {
   const x = Math.max(0, input);
   switch (kind) {
     case "passive":
@@ -48,7 +46,7 @@ export function evaluateFlux(kind: FluxFunctionKind, input: number): number {
   }
 }
 
-export function evaluateDecay(kind: DecayFunctionKind, depletionPercent: number): number {
+export function evaluateDecay(kind, depletionPercent) {
   const d = Math.max(0, Math.min(100, depletionPercent)) / 100;
   switch (kind) {
     case "static":
