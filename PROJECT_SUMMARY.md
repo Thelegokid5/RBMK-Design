@@ -7,8 +7,16 @@ Build an accurate Nuclear Tech Mod RBMK designer/simulator that can run offline 
 ## Repository
 
 - GitHub: https://github.com/Thelegokid5/RBMK-Design
-- Local path: `C:\Users\blues\OneDrive\Documents\VS Code\RBMK Design`
+- Local path: `C:\Users\blues\OneDrive\Documents\VS Code\RBMK-Design`
 - Branch: `main`
+
+## Sources and Assets
+
+- Original mod JAR: `C:\Users\blues\curseforge\minecraft\Instances\mc\mods\HBM-NTM-.1.0.27_X5645_H261.jar`
+- RBMK top-texture source: `public\textures\rbmk`
+- Godot RBMK top-texture copy: `godot\assets\textures\rbmk`
+- Godot project: `godot`
+- The `public\textures\rbmk-gui` folder is UI-only; do not use it for column textures.
 
 ## Current App State
 

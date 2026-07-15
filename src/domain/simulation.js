@@ -1,5 +1,5 @@
 import { DIRS, MELTDOWN_TEMP, STEAM_TYPES } from "./channels.js";
-import { evaluateDecay, evaluateFlux, fuelById } from "./fuels.js";
+import { evaluateFuelOutput, fuelById } from "./fuels.js";
 
 function makeFlat(size, fill = 0) {
   return Array.from({ length: size }, () => {
@@ -35,6 +35,7 @@ function isModerator(cell) {
 }
 
 function splitEfficiency(inputSpeed, targetSpeed) {
+  if (inputSpeed === "any" || targetSpeed === "any") return 1;
   if (inputSpeed === targetSpeed) return 1;
   return targetSpeed === "slow" ? 0.5 : 0.3;
 }
@@ -44,12 +45,11 @@ function controlTransmission(cell) {
   return Math.max(0, Math.min(1, 1 - cell.controlInsertion / 100));
 }
 
-function fuelOutput(cell, incomingFlux, xenon, depletion) {
+function fuelOutput(cell, incomingFlux, xenon, depletion, coreHeat = 20) {
   if (!cell.fuelId) return 0;
   const fuel = fuelById[cell.fuelId];
   if (!fuel) return 0;
-  const xenonFactor = Math.max(0, 1 - xenon / 100);
-  return evaluateFlux(fuel.fluxFunction, incomingFlux) * xenonFactor * evaluateDecay(fuel.decay, depletion);
+  return evaluateFuelOutput(fuel, incomingFlux, xenon, depletion, coreHeat);
 }
 
 export function stepSimulation(design, previous) {
@@ -61,15 +61,6 @@ export function stepSimulation(design, previous) {
   const xenon = copyFlat(previous.xenon);
   const depletion = copyFlat(previous.depletion);
 
-  for (let r = 0; r < size; r += 1) {
-    for (let c = 0; c < size; c += 1) {
-      const cell = design.cells[r][c];
-      if (!isFuel(cell) || !cell.fuelId) continue;
-      const fuel = fuelById[cell.fuelId];
-      if (fuel?.selfIgniting) flux[r][c] += fuel.fluxFunction === "passive" ? 20 : 2;
-    }
-  }
-
   for (let pass = 0; pass < 4; pass += 1) {
     for (let r = 0; r < size; r += 1) {
       for (let c = 0; c < size; c += 1) {
@@ -77,7 +68,7 @@ export function stepSimulation(design, previous) {
         if (!isFuel(cell) || !cell.fuelId) continue;
         const fuel = fuelById[cell.fuelId];
         if (!fuel) continue;
-        const sourceOutput = fuelOutput(cell, flux[r][c], xenon[r][c], depletion[r][c]) / 4;
+        const sourceOutput = fuelOutput(cell, flux[r][c], xenon[r][c], depletion[r][c], coreHeat[r][c]) / 4;
         if (sourceOutput <= 0) continue;
 
         for (const [dr, dc] of DIRS) {
@@ -132,7 +123,7 @@ export function stepSimulation(design, previous) {
       if (isFuel(cell) && cell.fuelId) {
         const fuel = fuelById[cell.fuelId];
         if (!fuel) continue;
-        const out = fuelOutput(cell, flux[r][c], xenon[r][c], depletion[r][c]);
+        const out = fuelOutput(cell, flux[r][c], xenon[r][c], depletion[r][c], coreHeat[r][c]);
         coreHeat[r][c] += out * fuel.heatPerFlux;
         const coreToSkin = ((coreHeat[r][c] - skinHeat[r][c]) / 2) * fuel.diffusion;
         coreHeat[r][c] -= coreToSkin;
@@ -140,8 +131,11 @@ export function stepSimulation(design, previous) {
         const skinToColumn = (skinHeat[r][c] - heat[r][c]) / 2;
         skinHeat[r][c] -= skinToColumn;
         heat[r][c] += skinToColumn;
-        xenon[r][c] = Math.max(0, Math.min(100, xenon[r][c] + out * fuel.xenonGenMultiplier * 0.01 - (out * out) / 25 * 0.01));
-        depletion[r][c] = Math.min(100, depletion[r][c] + (flux[r][c] / fuel.yield) * 100);
+        const inputWithSource = Math.max(0, flux[r][c] + fuel.selfRate);
+        const xenonAfterBurn = Math.max(0, xenon[r][c] - (inputWithSource * inputWithSource) / fuel.xenonBurnDivisor);
+        const xenonAdjustedInput = inputWithSource * Math.max(0, 1 - xenonAfterBurn / 100);
+        xenon[r][c] = Math.max(0, Math.min(100, xenonAfterBurn + xenonAdjustedInput * fuel.xenonGenMultiplier));
+        depletion[r][c] = Math.min(100, depletion[r][c] + (xenonAdjustedInput / fuel.yield) * 100);
         if (skinHeat[r][c] >= fuel.meltingPoint) {
           const spike = (skinHeat[r][c] + coreHeat[r][c]) / 3;
           heat[r][c] += spike;

@@ -1,5 +1,5 @@
 import { CELL_SIZE, CHANNELS, CONTROL_GROUPS, SIM_TPS, STEAM_TYPES } from "./domain/channels.js";
-import { evaluateDecay, evaluateFlux, FUEL_RODS, fuelById } from "./domain/fuels.js";
+import { evaluateFuelOutput, FUEL_RODS, fuelById } from "./domain/fuels.js";
 import { cloneDesign, createDesign, resizeDesign } from "./domain/grid.js";
 import { createSimulationState, stepSimulation, summarizeSimulation } from "./domain/simulation.js";
 import { exportDesign, importDesign, loadSlots, saveSlot } from "./domain/storage.js";
@@ -49,6 +49,22 @@ const statusHeat = document.getElementById("status-heat");
 const statusMaxHeat = document.getElementById("status-max-heat");
 const statusSteamContainer = document.getElementById("status-steam-container");
 
+const RBMK_TEXTURES = {
+  fuel: "rbmk_element_top.png",
+  moderated_fuel: "rbmk_element_mod_top.png",
+  control: "rbmk_control_top.png",
+  moderated_control: "rbmk_control_mod_top.png",
+  auto_control: "rbmk_control_auto_top.png",
+  steam: "rbmk_boiler_top.png",
+  graphite: "rbmk_moderator_top.png",
+  reflector: "rbmk_reflector_top.png",
+  absorber: "rbmk_absorber_top.png",
+  irradiation: "rbmk_storage_top.png",
+  heater: "rbmk_heater_top.png",
+  cooler: "rbmk_cooler_top.png",
+  structural: "rbmk_blank_top.png",
+};
+
 // Cell Art DOM Element Creator
 function createCellArtDOM(cell, r, c) {
   const channel = CHANNELS.find((entry) => entry.id === cell.type);
@@ -66,63 +82,16 @@ function createCellArtDOM(cell, r, c) {
   wrapper.style.setProperty("--channel", color);
   wrapper.style.setProperty("--heat", heatGlow);
   wrapper.style.setProperty("--flux", fluxGlow);
-  
-  const cover = document.createElement("div");
-  cover.className = "cell-cover";
-  wrapper.appendChild(cover);
-  
-  if (cell.type === "fuel" || cell.type === "moderated_fuel") {
-    if (cell.type === "moderated_fuel") {
-      const cross = document.createElement("div");
-      cross.className = "moderator-cross";
-      wrapper.appendChild(cross);
-    }
-    const pin = document.createElement("div");
-    pin.className = "fuel-pin";
-    wrapper.appendChild(pin);
-    
-    const core = document.createElement("div");
-    core.className = "fuel-core";
-    wrapper.appendChild(core);
-  } else if (cell.type === "control" || cell.type === "moderated_control" || cell.type === "auto_control") {
-    const rod = document.createElement("div");
-    rod.className = "control-rod";
-    wrapper.appendChild(rod);
-  } else if (cell.type === "steam") {
-    const steamBars = document.createElement("div");
-    steamBars.className = "steam-bars";
-    steamBars.innerHTML = "<span></span><span></span><span></span>";
-    wrapper.appendChild(steamBars);
-  } else if (cell.type === "graphite") {
-    const graphite = document.createElement("div");
-    graphite.className = "graphite-grid";
-    wrapper.appendChild(graphite);
-  } else if (cell.type === "reflector") {
-    const reflector = document.createElement("div");
-    reflector.className = "reflector-mark";
-    wrapper.appendChild(reflector);
-  } else if (cell.type === "absorber") {
-    const absorber = document.createElement("div");
-    absorber.className = "absorber-bars";
-    absorber.innerHTML = "<span></span><span></span><span></span>";
-    wrapper.appendChild(absorber);
-  } else if (cell.type === "irradiation") {
-    const irradiation = document.createElement("div");
-    irradiation.className = "irradiation-core";
-    wrapper.appendChild(irradiation);
-  } else if (cell.type === "heater") {
-    const heater = document.createElement("div");
-    heater.className = "heater-bars";
-    heater.innerHTML = "<span></span><span></span>";
-    wrapper.appendChild(heater);
-  } else if (cell.type === "cooler") {
-    const cooler = document.createElement("div");
-    cooler.className = "cooler-core";
-    wrapper.appendChild(cooler);
-  } else if (cell.type === "structural") {
-    const structural = document.createElement("div");
-    structural.className = "structural-core";
-    wrapper.appendChild(structural);
+
+  const textureName = RBMK_TEXTURES[cell.type];
+  if (textureName) {
+    wrapper.classList.add("textured");
+    const texture = document.createElement("img");
+    texture.className = "cell-texture";
+    texture.src = `textures/rbmk/${textureName}`;
+    texture.alt = "";
+    texture.draggable = false;
+    wrapper.appendChild(texture);
   }
   
   const fluxOverlay = document.createElement("div");
@@ -465,8 +434,10 @@ function renderDoddStatic() {
       <section>
         <h3>${fuel.name}</h3>
         <div class="kv"><span>Yield</span><strong>${fuel.yield.toLocaleString()}</strong></div>
-        <div class="kv"><span>Decay</span><strong>${fuel.decay.replace(/_/g, " ")}</strong></div>
+        <div class="kv"><span>Depletion</span><strong>${fuel.decay.replace(/_/g, " ")}</strong></div>
         <div class="kv"><span>Flux Function</span><strong>${fuel.fluxFunction.replace(/_/g, " ")}</strong></div>
+        <div class="kv"><span>Reactivity</span><strong>${fuel.reactivity}</strong></div>
+        <div class="kv"><span>Self flux</span><strong>${fuel.selfRate}</strong></div>
         <div class="kv"><span>Splits with</span><strong>${fuel.splitsWith}</strong></div>
         <div class="kv"><span>Splits into</span><strong>${fuel.splitsInto}</strong></div>
         <div class="kv"><span>Melt point</span><strong>${fuel.meltingPoint}°C</strong></div>
@@ -518,11 +489,7 @@ function updateDoddLive() {
   const liveXenon = sim.xenon[r]?.[c] ?? 0;
   const liveDepletion = sim.depletion[r]?.[c] ?? 0;
   
-  const fuelOutputVal = fuel
-    ? evaluateFlux(fuel.fluxFunction, liveFlux)
-        * Math.max(0, 1 - liveXenon / 100)
-        * evaluateDecay(fuel.decay, liveDepletion)
-    : 0;
+  const fuelOutputVal = fuel ? evaluateFuelOutput(fuel, liveFlux, liveXenon, liveDepletion, liveCoreHeat) : 0;
 
   const heatEl = document.getElementById("live-heat");
   const coreHeatEl = document.getElementById("live-core-heat");

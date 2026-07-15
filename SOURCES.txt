@@ -1,0 +1,18 @@
+RBMK Design sources and locations
+
+GitHub repository:
+https://github.com/Thelegokid5/RBMK-Design
+
+Original mod JAR:
+C:\Users\blues\curseforge\minecraft\Instances\mc\mods\HBM-NTM-.1.0.27_X5645_H261.jar
+
+RBMK top textures used by the Godot project:
+C:\Users\blues\OneDrive\Documents\VS Code\RBMK-Design\public\textures\rbmk
+
+Godot texture copy:
+C:\Users\blues\OneDrive\Documents\VS Code\RBMK-Design\godot\assets\textures\rbmk
+
+Godot project:
+C:\Users\blues\OneDrive\Documents\VS Code\RBMK-Design\godot
+
+Note: Do not use public\textures\rbmk-gui for the column textures.

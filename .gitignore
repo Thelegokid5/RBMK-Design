@@ -2,6 +2,8 @@ node_modules/
 dist/
 release/
 .vite/
+godot/.godot/
+godot/.import/
 *.log
 *.local
 .DS_Store

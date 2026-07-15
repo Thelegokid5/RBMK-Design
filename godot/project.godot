@@ -1,0 +1,21 @@
+; Engine configuration file.
+; Open this folder in Godot 4.x.
+
+config_version=5
+
+[application]
+
+config/name="RBMK Design"
+run/main_scene="res://scenes/Main.tscn"
+config/features=PackedStringArray("4.2")
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=820
+window/size/window_width_override=1280
+window/size/window_height_override=820
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
